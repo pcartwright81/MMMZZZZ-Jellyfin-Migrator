@@ -58,7 +58,7 @@ import os
 #   * Go to "Search -> Bookmark -> Remove Bookmarked Lines"
 #   * Repeat as needed
 # Text encoding is UTF-8 (in npp selectable under "Encoding -> UTF-8")
-log_file = "D:/jf-migrator.log"
+log_file = "E:/jf-migrator.log"
 
 
 # These paths will be processed in the order they're listed here.
@@ -79,19 +79,21 @@ path_replacements = {
     # Self-explanatory, I guess. "\\" if migrating *to* Windows, "/" else.
     "target_path_slash": "/",
     # Paths to your libraries
-    "D:/Serien": "/data/tvshows",
-    "F:/Serien": "/data/tvshows",
-    "F:/Filme": "/data/movies",
-    "F:/Musik": "/data/music",
+    "D:/movies": "/media/NAS/movies",
+    "D:/kids movies": "/media/NAS/kids movies",
+    "D:/kids tv": "/media/NAS/kids tv",
+    "D:/russian/Movies": "/media/NAS/russian/Movies",
+    "D:/tv": "/media/NAS/tv",
+    "D:/Z_Incoming/tv": "/media/NAS/Z_Incoming/tv",
     # Paths to the different parts of the jellyfin database. Determine these
     # by comparing your existing installation with the paths in your new
     # installation.
-    "C:/ProgramData/Jellyfin/Server/config": "/config",
-    "C:/ProgramData/Jellyfin/Server/cache": "/config/cache",
-    "C:/ProgramData/Jellyfin/Server/log": "/config/log",
-    "C:/ProgramData/Jellyfin/Server": "/config/data", # everything else: metadata, plugins, ...
-    "C:/ProgramData/Jellyfin/Server/transcodes": "/config/data/transcodes",
-    "C:/Program Files/Jellyfin/Server/ffmpeg.exe": "usr/lib/jellyfin-ffmpeg/ffmpeg",
+    "C:/ProgramData/Jellyfin/Server/config": "/share/jellyfin/config",
+    "C:/ProgramData/Jellyfin/Server/cache": "/share/jellyfin/cache",
+    "C:/ProgramData/Jellyfin/Server/log": "/share/jellyfin/log",
+    "C:/ProgramData/Jellyfin/Server": "/share/jellyfin/", # everything else: metadata, plugins, ...
+    "C:/ProgramData/Jellyfin/Server/transcodes": "/share/jellyfin/transcodes",
+    "C:/Program Files/Jellyfin/Server/ffmpeg.exe": "/usr/lib/jellyfin-ffmpeg/ffmpeg",
     "%MetadataPath%": "%MetadataPath%",
     "%AppDataPath%": "%AppDataPath%",
 }
@@ -119,13 +121,16 @@ path_replacements = {
 #   * %MetadataPath%.
 fs_path_replacements = {
     "log_no_warnings": False,
-    "target_path_slash": "/",
-    "/config": "/",
-    "%AppDataPath%": "/data/data",
-    "%MetadataPath%": "/data/metadata",
-    "/data/tvshows": "Y:/Serien",
-    "/data/movies": "Y:/Filme",
-    "/data/music": "Y:/Musik",
+    # "target_path_slash": "/",
+    # "/config": "/",
+    # "%AppDataPath%": "/share/jellyfin/data",
+    # "%MetadataPath%": "/share/jellyfin/metadata",
+    # "/media/NAS/movies" : "D:/movies",
+    # "/media/NAS/kids movies": "D:/kids movies",
+    # "/media/NAS/kids tv" : "D:/kids tv",
+    # "/media/NAS/russian/Movies" : "D:/russian/Movies",
+    # "/media/NAS/tv" : "D:/tv",
+    # "/media/NAS/Z_Incoming/tv" : "D:/Z_Incoming/tv",
 }
 
 
@@ -137,8 +142,8 @@ fs_path_replacements = {
 # This is required if you copied your jellyfin DB to another location and then
 # start processing it with this script.
 original_root = Path("C:/ProgramData/Jellyfin/Server")
-source_root = Path("D:/Jellyfin/Server")
-target_root = Path("D:/Jellyfin-dummy")
+source_root = Path("E:/Jellyfin/Server")
+target_root = Path("E:/Jellyfin-dummy")
 
 
 ### The To-Do Lists: todo_list_paths, todo_list_id_paths and todo_list_ids.
@@ -423,22 +428,22 @@ todo_list_ids = [
             },
         },
     },
-    {
-        "source": source_root / "data/playback_reporting.db",
-        "target": "auto-existing",             # If you used "auto" in todo_list_paths, leave this on "auto-existing". Otherwise specify same path.
-        "replacements": {"oldids": "newids"},  # Will be auto-generated during the migration.
-        "tables": {
-            "PlaybackActivity": {
-                "str": [],
-                "str-dash": [],
-                "ancestor-str": [
-                    "ItemId",
-                ],
-                "ancestor-str-dash": [],
-                "bin": [],
-            },
-        },
-    },
+    # {
+    #     "source": source_root / "data/playback_reporting.db",
+    #     "target": "auto-existing",             # If you used "auto" in todo_list_paths, leave this on "auto-existing". Otherwise specify same path.
+    #     "replacements": {"oldids": "newids"},  # Will be auto-generated during the migration.
+    #     "tables": {
+    #         "PlaybackActivity": {
+    #             "str": [],
+    #             "str-dash": [],
+    #             "ancestor-str": [
+    #                 "ItemId",
+    #             ],
+    #             "ancestor-str-dash": [],
+    #             "bin": [],
+    #         },
+    #     },
+    # },
 ]
 
 
@@ -1173,6 +1178,9 @@ def jf_date_str_to_python_ns(s: str):
     subseconds = int(subseconds.split("+")[0].rstrip(ascii_letters).ljust(9, "0"))
     # Add explicit information about the timezone (UTC+00:00)
     s += "+00:00"
+    index = s.find("Z")
+    if index > -1:
+        s = s.replace("Z", "")
     t = int(datetime.datetime.fromisoformat(s).timestamp())
     # Convert to ns
     t *= 1000000000
